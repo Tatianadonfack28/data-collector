@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+
+{% block title %}Créer un formulaire — Data Collector{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2>➕ Créer un formulaire</h2>
+        <p>Configurez votre formulaire et ajoutez vos questions</p>
+    </div>
+    <a href="/dashboard" class="btn btn-secondary">
+        ← Retour au dashboard
+    </a>
+</div>
+
+<div class="create-layout">
+
+    <!-- COLONNE GAUCHE : Formulaire -->
+    <div class="create-main">
+
+        <!-- Informations générales -->
+        <div class="create-card">
+            <div class="create-card-header">
+                <span class="create-card-icon">📋</span>
+                <h3>Informations générales</h3>
+            </div>
+
+            <div class="form-group">
+                <label>Titre du formulaire *</label>
+                <input type="text" id="form-title"
+                       placeholder="Ex: Enquête santé étudiants Yaoundé">
+            </div>
+
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="form-description"
+                          placeholder="Décrivez l'objectif de votre enquête...">
+                </textarea>
+            </div>
+        </div>
+
+        <!-- Questions -->
+        <div class="create-card">
+            <div class="create-card-header">
+                <span class="create-card-icon">❓</span>
+                <h3>Questions <span class="badge" id="questions-badge">0</span></h3>
+            </div>
+
+            <div id="questions-list"></div>
+
+            <button class="btn-add-question" onclick="addQuestion()">
+                ➕ Ajouter une question
+            </button>
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <button class="btn btn-primary btn-save" onclick="saveForm()">
+            💾 Enregistrer le formulaire
+        </button>
+    </div>
+
+    <!-- COLONNE DROITE : Guide -->
+    <div class="create-sidebar">
+        <div class="sidebar-card">
+            <h4>💡 Types de questions</h4>
+            <div class="type-guide">
+                <div class="type-item">
+                    <span class="type-badge">Texte</span>
+                    <p>Réponse libre — nom, ville, commentaire</p>
+                </div>
+                <div class="type-item">
+                    <span class="type-badge">Nombre</span>
+                    <p>Valeur numérique — âge, score, quantité</p>
+                </div>
+                <div class="type-item">
+                    <span class="type-badge">Choix</span>
+                    <p>Options prédéfinies — sexe, niveau, région</p>
+                </div>
+                <div class="type-item">
+                    <span class="type-badge">Échelle</span>
+                    <p>Satisfaction de 1 à 5 — avis, niveau de stress</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-card">
+            <h4>✅ Conseils</h4>
+            <ul class="tips-list">
+                <li>Donnez un titre clair et précis</li>
+                <li>Limitez à 10 questions maximum</li>
+                <li>Utilisez des questions courtes</li>
+                <li>Mélangez les types de questions</li>
+            </ul>
+        </div>
+
+        <div class="sidebar-card sidebar-preview">
+            <h4>👁️ Aperçu en direct</h4>
+            <div id="preview-content">
+                <p class="preview-empty">
+                    Commencez à remplir le formulaire pour voir l'aperçu...
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+let questionCount = 0;
+
+// Aperçu en direct
+document.getElementById('form-title').addEventListener('input', updatePreview);
+document.getElementById('form-description').addEventListener('input', updatePreview);
+
+function updatePreview() {
+    const title = document.getElementById('form-title').value;
+    const desc = document.getElementById('form-description').value;
+    const preview = document.getElementById('preview-content');
+
+    if (!title) {
+        preview.innerHTML = '<p class="preview-empty">Commencez à remplir le formulaire pour voir l\'aperçu...</p>';
+        return;
+    }
+
+    preview.innerHTML = `
+        <div class="preview-title">${title}</div>
+        ${desc ? `<div class="preview-desc">${desc}</div>` : ''}
+        <div class="preview-questions" id="preview-questions"></div>
+    `;
+    updatePreviewQuestions();
+}
+
+function updatePreviewQuestions() {
+    const previewQ = document.getElementById('preview-questions');
+    if (!previewQ) return;
+
+    let html = '';
+    for (let i = 1; i <= questionCount; i++) {
+        const labelEl = document.getElementById(`question-label-${i}`);
+        if (!labelEl || !labelEl.value) continue;
+        html += `<div class="preview-q">• ${labelEl.value}</div>`;
+    }
+    previewQ.innerHTML = html;
+}
+
+function addQuestion() {
+    questionCount++;
+    document.getElementById('questions-badge').textContent = questionCount;
+
+    const questionsList = document.getElementById('questions-list');
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'question-item';
+    questionDiv.id = `question-${questionCount}`;
+
+    questionDiv.innerHTML = `
+        <div class="question-header">
+            <div class="question-num">Q${questionCount}</div>
+            <button class="btn-delete"
+                    onclick="removeQuestion(${questionCount})">
+                🗑️ Supprimer
+            </button>
+        </div>
+
+        <div class="form-group">
+            <label>Intitulé de la question *</label>
+            <input type="text"
+                   id="question-label-${questionCount}"
+                   placeholder="Ex: Quel est votre âge ?"
+                   oninput="updatePreview()">
+        </div>
+
+        <div class="form-group">
+            <label>Type de réponse</label>
+            <div class="type-selector">
+                <button class="type-btn active"
+                        onclick="selectType(${questionCount}, 'texte', this)">
+                    📝 Texte
+                </button>
+                <button class="type-btn"
+                        onclick="selectType(${questionCount}, 'nombre', this)">
+                    🔢 Nombre
+                </button>
+                <button class="type-btn"
+                        onclick="selectType(${questionCount}, 'choix', this)">
+                    ☑️ Choix
+                </button>
+                <button class="type-btn"
+                        onclick="selectType(${questionCount}, 'echelle', this)">
+                    ⭐ Échelle
+                </button>
+            </div>
+            <input type="hidden"
+                   id="question-type-${questionCount}"
+                   value="texte">
+        </div>
+
+        <div id="options-${questionCount}" style="display:none;">
+            <div class="form-group">
+                <label>Options (une par ligne)</label>
+                <textarea id="question-options-${questionCount}"
+                          placeholder="Option 1&#10;Option 2&#10;Option 3">
+                </textarea>
+            </div>
+        </div>
+    `;
+
+    questionsList.appendChild(questionDiv);
+}
+
+function selectType(id, type, btn) {
+    // Mettre à jour le bouton actif
+    const buttons = btn.parentElement.querySelectorAll('.type-btn');
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    // Mettre à jour la valeur cachée
+    document.getElementById(`question-type-${id}`).value = type;
+
+    // Afficher/cacher les options
+    const optionsDiv = document.getElementById(`options-${id}`);
+    optionsDiv.style.display = type === 'choix' ? 'block' : 'none';
+}
+
+function removeQuestion(id) {
+    document.getElementById(`question-${id}`).remove();
+    questionCount--;
+    document.getElementById('questions-badge').textContent = questionCount;
+    updatePreview();
+}
+
+function saveForm() {
+    const title = document.getElementById('form-title').value;
+    const description = document.getElementById('form-description').value;
+    const errorDiv = document.getElementById('error-message');
+    const successDiv = document.getElementById('success-message');
+
+    errorDiv.textContent = '';
+
+    if (!title) {
+        errorDiv.textContent = '⚠️ Le titre est obligatoire';
+        return;
+    }
+
+    const questions = [];
+    for (let i = 1; i <= questionCount; i++) {
+        const labelEl = document.getElementById(`question-label-${i}`);
+        if (!labelEl) continue;
+
+        const label = labelEl.value;
+        const type = document.getElementById(`question-type-${i}`).value;
+
+        if (!label) continue;
+
+        const question = { label, type };
+
+        if (type === 'choix') {
+            const optionsText = document.getElementById(
+                `question-options-${i}`).value;
+            question.options = optionsText.split('\n')
+                                .filter(o => o.trim() !== '');
+        }
+
+        questions.push(question);
+    }
+
+    if (questions.length === 0) {
+        errorDiv.textContent = '⚠️ Ajoutez au moins une question';
+        return;
+    }
+
+    fetch('/api/forms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, questions })
+    })
+    .then(response => response.json())
+    .then(data => {
+        successDiv.textContent = '✅ Formulaire créé avec succès !';
+        setTimeout(() => {
+            window.location.href = '/dashboard';
+        }, 1500);
+    })
+    .catch(error => {
+        errorDiv.textContent = '❌ Erreur lors de la création';
+    });
+}
+</script>
+{% endblock %}

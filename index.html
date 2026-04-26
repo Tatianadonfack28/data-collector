@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Accueil — Data Collector{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="hero">
+    <div class="hero-badge">📊 INF232 EC2 — Université de Yaoundé I</div>
+    <h1>Oline <span class="hero-highlight">Data Collection</span></h1>
+    <p>Créez des formulaires personnalisés, collectez des réponses<br>
+    et obtenez des analyses descriptives automatiques en temps réel.</p>
+    <div class="hero-buttons">
+        <a href="/create-form" class="btn btn-white">
+            ➕ Créer un formulaire
+        </a>
+        <a href="/dashboard" class="btn btn-outline">
+            📈 Voir le dashboard
+        </a>
+    </div>
+    <div class="hero-stats">
+        <div class="hero-stat">
+            <strong>4</strong>
+            <span>Types de questions</span>
+        </div>
+        <div class="hero-stat">
+            <strong>100%</strong>
+            <span>Gratuit & en ligne</span>
+        </div>
+        <div class="hero-stat">
+            <strong>CSV</strong>
+            <span>Export des données</span>
+        </div>
+    </div>
+</section>
+
+<!-- COMMENT CA MARCHE -->
+<section class="steps-section">
+    <div class="section-header">
+        <h2>Comment ça marche ?</h2>
+        <p>3 étapes simples pour collecter vos données</p>
+    </div>
+    <div class="steps">
+        <div class="step-card">
+            <div class="step-number">01</div>
+            <div class="step-icon">📝</div>
+            <h3>Créez votre formulaire</h3>
+            <p>Ajoutez vos questions — texte, nombre, choix multiple ou échelle de satisfaction</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+            <div class="step-number">02</div>
+            <div class="step-icon">🔗</div>
+            <h3>Partagez le lien</h3>
+            <p>Envoyez le lien de votre formulaire à vos répondants via WhatsApp, email ou SMS</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card">
+            <div class="step-number">03</div>
+            <div class="step-icon">📊</div>
+            <h3>Analysez les résultats</h3>
+            <p>Consultez les statistiques descriptives et les graphiques générés automatiquement</p>
+        </div>
+    </div>
+</section>
+
+<!-- FONCTIONNALITES -->
+<section class="features-section">
+    <div class="section-header">
+        <h2>Fonctionnalités</h2>
+        <p>Tout ce dont vous avez besoin pour vos enquêtes</p>
+    </div>
+    <div class="features-grid">
+        <div class="feature-card">
+            <div class="feature-icon">📝</div>
+            <h3>Formulaires flexibles</h3>
+            <p>Créez des formulaires avec autant de questions que vous voulez — texte libre, nombres, choix multiples ou échelles</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Collecte en temps réel</h3>
+            <p>Les réponses sont enregistrées instantanément dès qu'un répondant soumet le formulaire</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Analyse automatique</h3>
+            <p>Moyenne, médiane, écart-type, distribution — toutes les statistiques calculées automatiquement</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Graphiques interactifs</h3>
+            <p>Visualisez vos données avec des graphiques en barres et camemberts générés automatiquement</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">💾</div>
+            <h3>Export CSV</h3>
+            <p>Téléchargez toutes vos données brutes en format CSV pour les analyser dans Excel ou Python</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">🌍</div>
+            <h3>100% en ligne</h3>
+            <p>Accessible depuis n'importe quel appareil — ordinateur, téléphone ou tablette</p>
+        </div>
+    </div>
+</section>
+
+<!-- CALL TO ACTION -->
+<section class="cta-section">
+    <h2>Prêt à collecter vos données ?</h2>
+    <p>Créez votre premier formulaire gratuitement en moins de 2 minutes</p>
+    <a href="/create-form" class="btn btn-primary">
+        ➕ Commencer maintenant
+    </a>
+</section>
+
+{% endblock %}

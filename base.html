@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Data Collector{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Barre de navigation -->
+    <nav>
+        <div class="nav-brand">📊 Data Collector</div>
+        <div class="nav-links">
+            <a href="/">Accueil</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/create-form">Créer un formulaire</a>
+        </div>
+    </nav>
+
+    <!-- Contenu de chaque page -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Pied de page -->
+    <footer>
+        <p>Data Collector App — Université de Yaoundé I — INF232 EC2</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Connexion — Data Collector{% endblock %}
+
+{% block content %}
+
+<div class="auth-container">
+    <div class="auth-card">
+
+        <div class="auth-logo">📊</div>
+        <h2>Bon retour !</h2>
+        <p>Connectez-vous pour accéder à vos formulaires</p>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email"
+                   placeholder="votre@email.com">
+        </div>
+
+        <div class="form-group">
+            <label>Mot de passe</label>
+            <input type="password" id="password"
+                   placeholder="••••••••">
+        </div>
+
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+
+        <button class="btn btn-primary btn-full" onclick="login()">
+            🔐 Se connecter
+        </button>
+
+        <p class="auth-link">
+            Pas encore de compte ?
+            <a href="/register">Créer un compte</a>
+        </p>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function login() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('error-message');
+    const successDiv = document.getElementById('success-message');
+
+    errorDiv.textContent = '';
+    successDiv.textContent = '';
+
+    if (!email || !password) {
+        errorDiv.textContent = '⚠️ Veuillez remplir tous les champs';
+        return;
+    }
+
+    fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            errorDiv.textContent = '❌ ' + data.error;
+            return;
+        }
+        successDiv.textContent = '✅ Connexion réussie !';
+        setTimeout(() => {
+            window.location.href = '/dashboard';
+        }, 1000);
+    })
+    .catch(error => {
+        errorDiv.textContent = '❌ Erreur de connexion';
+    });
+}
+
+// Connexion avec la touche Entrée
+document.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') login();
+});
+</script>
+{% endblock %}

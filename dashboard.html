@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard — Data Collector{% endblock %}
+
+{% block content %}
+
+<!-- EN-TÊTE -->
+<div class="page-header">
+    <div>
+        <h2>📊 Tableau de bord</h2>
+        <p>Gérez vos formulaires et suivez vos collectes</p>
+    </div>
+    <a href="/create-form" class="btn btn-primary">
+        ➕ Nouveau formulaire
+    </a>
+</div>
+
+<!-- STATISTIQUES -->
+<div class="stats-cards">
+    <div class="stat-card">
+        <div class="stat-icon">📝</div>
+        <div class="stat-info">
+            <h3 id="total-forms">0</h3>
+            <p>Formulaires créés</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📥</div>
+        <div class="stat-info">
+            <h3 id="total-responses">0</h3>
+            <p>Réponses collectées</p>
+        </div>
+    </div>
+</div>
+
+<!-- LISTE DES FORMULAIRES -->
+<div class="forms-section">
+    <div class="forms-section-header">
+        <h3>📝 Mes formulaires</h3>
+        <span id="forms-count" class="badge">0 formulaire(s)</span>
+    </div>
+    <div id="forms-list">
+        <p class="loading">⏳ Chargement...</p>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadForms();
+});
+
+function loadForms() {
+    fetch('/api/forms')
+        .then(response => response.json())
+        .then(forms => {
+            const formsList = document.getElementById('forms-list');
+            const totalForms = document.getElementById('total-forms');
+            const formsCount = document.getElementById('forms-count');
+
+            totalForms.textContent = forms.length;
+            formsCount.textContent = `${forms.length} formulaire(s)`;
+
+            if (forms.length === 0) {
+                formsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h4>Aucun formulaire créé</h4>
+                        <p>Créez votre premier formulaire pour commencer à collecter des données</p>
+                        <a href="/create-form" class="btn btn-primary">
+                            ➕ Créer mon premier formulaire
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            formsList.innerHTML = forms.map(form => `
+                <div class="form-card">
+                    <div class="form-card-left">
+                        <div class="form-card-icon">📋</div>
+                        <div class="form-card-info">
+                            <h4>${form.title}</h4>
+                            <p>${form.description || 'Aucune description'}</p>
+                            <div class="form-card-meta">
+                                <span>🕐 ${form.created_at}</span>
+                                <span>❓ ${form.questions.length} question(s)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-card-actions">
+                        <a href="/fill-form/${form.id}" 
+                           class="btn btn-secondary">
+                            📝 Remplir
+                        </a>
+                        <a href="/result/${form.id}" 
+                           class="btn btn-primary">
+                            📈 Résultats
+                        </a>
+                        <button class="btn-copy" 
+                                onclick="copyLink('${form.id}')"
+                                title="Copier le lien">
+                            🔗
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            document.getElementById('forms-list').innerHTML =
+                '<p class="error-message">❌ Erreur de chargement</p>';
+        });
+}
+
+function copyLink(formId) {
+    const link = `${window.location.origin}/fill-form/${formId}`;
+    
+    // Méthode compatible avec tous les navigateurs
+    const textarea = document.createElement('textarea');
+    textarea.value = link;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    
+    showToast('🔗 Lien copié : ' + link);
+}
+
+function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.classList.add('show'), 100);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,312 @@
+{% extends 'base.html' %}
+
+{% block title %}Résultats — Data Collector{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h2 id="form-title">📈 Résultats</h2>
+        <p id="form-subtitle">Analyse descriptive des données collectées</p>
+    </div>
+    <div class="result-actions">
+        <a id="export-btn" href="#" class="btn btn-secondary">
+            💾 Exporter CSV
+        </a>
+        <a href="/dashboard" class="btn btn-primary">
+            🏠 Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- STATISTIQUES GLOBALES -->
+<div class="result-stats">
+    <div class="result-stat-card">
+        <div class="result-stat-icon">📥</div>
+        <div>
+            <h3 id="total-responses">0</h3>
+            <p>Réponses collectées</p>
+        </div>
+    </div>
+    <div class="result-stat-card">
+        <div class="result-stat-icon">❓</div>
+        <div>
+            <h3 id="total-questions">0</h3>
+            <p>Questions analysées</p>
+        </div>
+    </div>
+    <div class="result-stat-card">
+        <div class="result-stat-icon">📅</div>
+        <div>
+            <h3 id="form-date">—</h3>
+            <p>Date de création</p>
+        </div>
+    </div>
+    <div class="result-stat-card">
+        <div class="result-stat-icon">📊</div>
+        <div>
+            <h3 id="completion-rate">0%</h3>
+            <p>Taux de complétion</p>
+        </div>
+    </div>
+</div>
+
+<!-- ANALYSE PAR QUESTION -->
+<div class="analysis-section">
+    <div class="section-header">
+        <h3>📊 Analyse descriptive par question</h3>
+        <p>Statistiques et visualisations automatiques</p>
+    </div>
+    <div id="analysis-container">
+        <div class="loading-state">
+            <div class="loading-spinner"></div>
+            <p>Chargement de l'analyse...</p>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const formId = "{{ form_id }}";
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadForm();
+    loadAnalysis();
+});
+
+function loadForm() {
+    fetch(`/api/forms/${formId}`)
+        .then(response => response.json())
+        .then(form => {
+            document.getElementById('form-title').textContent =
+                `📈 ${form.title}`;
+            document.getElementById('form-subtitle').textContent =
+                form.description || 'Analyse descriptive des données collectées';
+            document.getElementById('total-questions').textContent =
+                form.questions.length;
+            document.getElementById('form-date').textContent =
+                form.created_at.split(' ')[0];
+            document.getElementById('export-btn').href =
+                `/api/forms/${formId}/export`;
+        })
+        .catch(error => {
+            console.error('Erreur chargement formulaire:', error);
+        });
+}
+
+function loadAnalysis() {
+    fetch(`/api/forms/${formId}/analysis`)
+        .then(response => response.json())
+        .then(analysis => {
+            const container = document.getElementById('analysis-container');
+            const questions = Object.keys(analysis);
+
+            if (!questions || questions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <h4>Aucune réponse collectée</h4>
+                        <p>Partagez le lien du formulaire pour commencer</p>
+                        <a href="/fill-form/${formId}" class="btn btn-primary">
+                            📝 Remplir le formulaire
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+
+            const count = analysis[questions[0]]?.count || 0;
+            document.getElementById('total-responses').textContent = count;
+            document.getElementById('completion-rate').textContent =
+                count > 0 ? '100%' : '0%';
+
+            container.innerHTML = questions.map((key, index) => {
+                const data = analysis[key];
+
+                if (data.type === 'numerique') {
+                    return `
+                        <div class="analysis-card">
+                            <div class="analysis-card-header">
+                                <div class="analysis-q-num">${index+1}</div>
+                                <div class="analysis-q-info">
+                                    <h4>${key}</h4>
+                                    <span class="analysis-badge numerique">
+                                        🔢 Numérique
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <span>Moyenne</span>
+                                    <strong>${data.mean}</strong>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Médiane</span>
+                                    <strong>${data.median}</strong>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Écart-type</span>
+                                    <strong>${data.std}</strong>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Min</span>
+                                    <strong>${data.min}</strong>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Max</span>
+                                    <strong>${data.max}</strong>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Réponses</span>
+                                    <strong>${data.count}</strong>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="chart-${index}"></canvas>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const distrib = data.distribution;
+                    const total = Object.values(distrib)
+                                        .reduce((a, b) => a + b, 0);
+                    return `
+                        <div class="analysis-card">
+                            <div class="analysis-card-header">
+                                <div class="analysis-q-num">${index+1}</div>
+                                <div class="analysis-q-info">
+                                    <h4>${key}</h4>
+                                    <span class="analysis-badge categoriel">
+                                        📝 Catégoriel
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-item">
+                                    <span>Réponses</span>
+                                    <strong>${data.count}</strong>
+                                </div>
+                                <div class="stat-item">
+                                    <span>Valeurs uniques</span>
+                                    <strong>${data.unique}</strong>
+                                </div>
+                            </div>
+                            <div class="distribution-bars">
+                                ${Object.entries(distrib).map(([val, cnt]) => `
+                                    <div class="dist-row">
+                                        <span class="dist-label">${val}</span>
+                                        <div class="dist-bar-wrap">
+                                            <div class="dist-bar"
+                                                 style="width:${Math.round((cnt/total)*100)}%">
+                                            </div>
+                                        </div>
+                                        <span class="dist-count">
+                                            ${cnt} (${Math.round((cnt/total)*100)}%)
+                                        </span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="chart-container chart-pie">
+                                <canvas id="chart-${index}"></canvas>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            // Dessiner les graphiques après insertion du HTML
+            setTimeout(() => {
+                questions.forEach((key, index) => {
+                    drawChart(index, key, analysis[key]);
+                });
+            }, 100);
+        })
+        .catch(error => {
+            console.error('Erreur analyse:', error);
+            document.getElementById('analysis-container').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">📭</div>
+                    <h4>Aucune réponse encore</h4>
+                    <p>Partagez le formulaire pour commencer à collecter</p>
+                    <a href="/fill-form/${formId}" class="btn btn-primary">
+                        📝 Remplir le formulaire
+                    </a>
+                </div>
+            `;
+        });
+}
+
+function drawChart(index, key, data) {
+    const canvas = document.getElementById(`chart-${index}`);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const colors = [
+        '#2563eb', '#0ea5e9', '#10b981',
+        '#f59e0b', '#ef4444', '#8b5cf6'
+    ];
+
+    if (data.type === 'numerique') {
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Moyenne', 'Médiane', 'Min', 'Max'],
+                datasets: [{
+                    label: key,
+                    data: [data.mean, data.median, data.min, data.max],
+                    backgroundColor: colors,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f0f4ff' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    } else {
+        const labels = Object.keys(data.distribution);
+        const values = Object.values(data.distribution);
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                    borderWidth: 3,
+                    borderColor: '#ffffff',
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 16,
+                            font: { size: 12 }
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+}
+</script>
+{% endblock %}
