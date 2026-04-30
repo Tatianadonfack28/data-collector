@@ -20,10 +20,32 @@ def submit_response(form_id):
     if not data or not data.get('answers'):
         return jsonify({'error': 'Réponses vides'}), 400
 
-    response = Response(form_id, data['answers'])
+    answers = data['answers']
+
+    # Validation des réponses
+    for key, value in answers.items():
+        if value == '' or value is None:
+            return jsonify({
+                'error': f'La question {key} est vide'
+            }), 400
+
+        # Vérifier les nombres
+        try:
+            num = float(value)
+            if num < 0:
+                return jsonify({
+                    'error': 'Les valeurs négatives ne sont pas acceptées'
+                }), 400
+            if num > 150:
+                return jsonify({
+                    'error': 'Valeur trop grande'
+                }), 400
+        except ValueError:
+            pass
+
+    response = Response(form_id, answers)
     response.save()
     return jsonify({'message': 'Réponse enregistrée avec succès'}), 201
-
 
 # Route 2 : Récupérer toutes les réponses
 @response_bp.route('/forms/<form_id>/responses', methods=['GET'])
