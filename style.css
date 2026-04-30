@@ -1031,3 +1031,59 @@ footer {
     font-size: 1rem;
     margin-top: 0.5rem;
 }
+
+/* ===== FIX MOBILE RÉSULTATS ===== */
+@media (max-width: 768px) {
+    .result-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .dist-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+    }
+
+    .dist-label {
+        min-width: unset;
+    }
+
+    .dist-count {
+        min-width: unset;
+        text-align: left;
+    }
+
+    .dist-bar-wrap {
+        width: 100%;
+    }
+
+    .analysis-card {
+        padding: 1rem;
+        overflow-x: hidden;
+    }
+
+    .chart-container {
+        max-height: 200px;
+        overflow: hidden;
+    }
+
+    .chart-pie {
+        max-width: 100%;
+    }
+
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+
+    * {
+        max-width: 100%;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+}
