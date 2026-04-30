@@ -1075,12 +1075,6 @@ footer {
         max-width: 100%;
     }
 
-    table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-    }
-
     * {
         max-width: 100%;
         word-wrap: break-word;
