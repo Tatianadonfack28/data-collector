@@ -6,10 +6,8 @@
 
 <div class="fill-layout">
 
-    <!-- COLONNE PRINCIPALE -->
     <div class="fill-main">
 
-        <!-- En-tête du formulaire -->
         <div class="fill-header-card">
             <div class="fill-header-icon">📋</div>
             <div>
@@ -18,7 +16,6 @@
             </div>
         </div>
 
-        <!-- Barre de progression -->
         <div class="progress-container">
             <div class="progress-info">
                 <span id="progress-text">Question 0 / 0</span>
@@ -29,13 +26,11 @@
             </div>
         </div>
 
-        <!-- Questions -->
         <div id="questions-container"></div>
 
         <div id="error-message" class="error-message"></div>
         <div id="success-message" class="success-message"></div>
 
-        <!-- Bouton soumettre -->
         <div class="fill-footer">
             <a href="/dashboard" class="btn btn-secondary">
                 ← Annuler
@@ -47,15 +42,14 @@
         </div>
     </div>
 
-    <!-- SIDEBAR -->
     <div class="fill-sidebar">
         <div class="sidebar-card">
             <h4>📌 Instructions</h4>
             <ul class="tips-list">
                 <li>Répondez à toutes les questions</li>
                 <li>Vos réponses sont anonymes</li>
-                <li>Vous ne pouvez soumettre qu'une fois</li>
                 <li>Vérifiez avant de soumettre</li>
+                <li>Les valeurs négatives ne sont pas acceptées</li>
             </ul>
         </div>
 
@@ -93,15 +87,16 @@ function loadForm() {
             const container = document.getElementById('questions-container');
             const nav = document.getElementById('questions-nav');
 
-            // Navigation latérale
             nav.innerHTML = form.questions.map((q, i) => `
                 <div class="nav-question" id="nav-q-${i}">
                     <span class="nav-num">${i+1}</span>
-                    <span class="nav-label">${q.label.substring(0, 30)}${q.label.length > 30 ? '...' : ''}</span>
+                    <span class="nav-label">
+                        ${q.label.substring(0, 30)}
+                        ${q.label.length > 30 ? '...' : ''}
+                    </span>
                 </div>
             `).join('');
 
-            // Questions
             container.innerHTML = form.questions.map((question, index) => `
                 <div class="question-block" id="qblock-${index}">
                     <div class="question-block-header">
@@ -115,7 +110,6 @@ function loadForm() {
                 </div>
             `).join('');
 
-            // Écouter les changements pour la progression
             attachListeners(form.questions);
         })
         .catch(error => {
@@ -127,15 +121,15 @@ function loadForm() {
 function renderInput(question, index) {
     switch(question.type) {
         case 'nombre':
-    return `
-        <input type="number"
-               id="answer-${index}"
-               class="form-input"
-               placeholder="Entrez un nombre"
-               min="0"
-               max="150"
-               onchange="updateProgress(); validateNumber(this)">
-    `;
+            return `
+                <input type="number"
+                       id="answer-${index}"
+                       class="form-input"
+                       placeholder="Entrez un nombre"
+                       min="0"
+                       max="150"
+                       onchange="updateProgress(); validateNumber(this)">
+            `;
 
         case 'choix':
             return `
@@ -145,7 +139,8 @@ function renderInput(question, index) {
                             <input type="radio"
                                    name="answer-${index}"
                                    value="${option}"
-                                   onchange="updateProgress(); highlightChoice(this)">
+                                   onchange="updateProgress();
+                                   highlightChoice(this)">
                             <span class="choice-text">${option}</span>
                         </label>
                     `).join('')}
@@ -182,6 +177,18 @@ function renderInput(question, index) {
     }
 }
 
+function validateNumber(input) {
+    if (input.value < 0) {
+        input.value = 0;
+        input.style.borderColor = 'red';
+    } else if (input.value > 150) {
+        input.value = 150;
+        input.style.borderColor = 'red';
+    } else {
+        input.style.borderColor = '';
+    }
+}
+
 function attachListeners(questions) {
     questions.forEach((q, i) => {
         const input = document.getElementById(`answer-${i}`);
@@ -190,7 +197,8 @@ function attachListeners(questions) {
                 updateNavQuestion(i, input.value !== '');
             });
         }
-        const radios = document.querySelectorAll(`input[name="answer-${i}"]`);
+        const radios = document.querySelectorAll(
+            `input[name="answer-${i}"]`);
         radios.forEach(r => {
             r.addEventListener('change', () => updateNavQuestion(i, true));
         });
@@ -209,7 +217,8 @@ function updateProgress() {
     let answered = 0;
     for (let i = 0; i < totalQuestions; i++) {
         const input = document.getElementById(`answer-${i}`);
-        const radio = document.querySelector(`input[name="answer-${i}"]:checked`);
+        const radio = document.querySelector(
+            `input[name="answer-${i}"]:checked`);
         if ((input && input.value.trim() !== '') || radio) {
             answered++;
         }
@@ -219,8 +228,10 @@ function updateProgress() {
 
     document.getElementById('progress-text').textContent =
         `${answered} / ${totalQuestions} réponses`;
-    document.getElementById('progress-percent').textContent = `${percent}%`;
-    document.getElementById('progress-fill').style.width = `${percent}%`;
+    document.getElementById('progress-percent').textContent =
+        `${percent}%`;
+    document.getElementById('progress-fill').style.width =
+        `${percent}%`;
 }
 
 function highlightChoice(radio) {
@@ -236,13 +247,25 @@ function submitForm() {
     const successDiv = document.getElementById('success-message');
     const answers = {};
 
-    // Compter les questions réelles dans la page
+    errorDiv.textContent = '';
+
     const blocks = document.querySelectorAll('.question-block');
     const total = blocks.length;
 
     if (total === 0) {
         errorDiv.textContent = '⚠️ Formulaire non chargé';
         return;
+    }
+
+    // Validation des nombres négatifs
+    const numberInputs = document.querySelectorAll('input[type="number"]');
+    for (let input of numberInputs) {
+        if (input.value < 0) {
+            errorDiv.textContent =
+                '⚠️ Les valeurs négatives ne sont pas acceptées';
+            input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
     }
 
     for (let i = 0; i < total; i++) {
@@ -263,31 +286,6 @@ function submitForm() {
         }
     }
 
-    console.log('Réponses à envoyer:', answers);
-
-    fetch(`/api/forms/${formId}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ answers })
-    })
-    .then(response => {
-        console.log('Status:', response.status);
-        return response.json();
-    })
-    .then(data => {
-        console.log('Réponse API:', data);
-        successDiv.textContent = '✅ Réponses envoyées avec succès !';
-        errorDiv.textContent = '';
-        setTimeout(() => {
-            window.location.href = `/result/${formId}`;
-        }, 1500);
-    })
-    .catch(error => {
-        console.error('Erreur:', error);
-        errorDiv.textContent = '❌ Erreur lors de l\'envoi';
-    });
-}
-
     fetch(`/api/forms/${formId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -295,7 +293,7 @@ function submitForm() {
     })
     .then(response => response.json())
     .then(data => {
-        successDiv.textContent = '✅ Réponses envoyées avec succès ! Merci !';
+        successDiv.textContent = '✅ Réponses envoyées avec succès !';
         errorDiv.textContent = '';
         setTimeout(() => {
             window.location.href = `/result/${formId}`;
@@ -304,6 +302,6 @@ function submitForm() {
     .catch(error => {
         errorDiv.textContent = '❌ Erreur lors de l\'envoi';
     });
-
+}
 </script>
 {% endblock %}
