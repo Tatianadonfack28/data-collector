@@ -127,13 +127,15 @@ function loadForm() {
 function renderInput(question, index) {
     switch(question.type) {
         case 'nombre':
-            return `
-                <input type="number"
-                       id="answer-${index}"
-                       class="form-input"
-                       placeholder="Entrez un nombre"
-                       onchange="updateProgress()">
-            `;
+    return `
+        <input type="number"
+               id="answer-${index}"
+               class="form-input"
+               placeholder="Entrez un nombre"
+               min="0"
+               max="150"
+               onchange="updateProgress(); validateNumber(this)">
+    `;
 
         case 'choix':
             return `
