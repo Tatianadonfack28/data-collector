@@ -1081,3 +1081,19 @@ footer {
         overflow-wrap: break-word;
     }
 }
+
+@media (max-width: 640px) {
+    nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
+
+    }
+
+   .nav-links {
+        width: 100%;
+        justify-content: space-between;
+   }
+
+}
+       
